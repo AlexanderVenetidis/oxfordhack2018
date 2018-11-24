@@ -25,108 +25,117 @@ import boto3
 import json
 
 class video_emotion_detection:
-    photo='bored1.jpg'
-    bucket='pictureswithstudents'
+
+    s3 = boto3.resource('s3')
+
+    bucket='segmentedvideo'
+    my_bucket = s3.Bucket(bucket)
+
     client=boto3.client('rekognition')
 
-    TimeWindowLength = 30
-    SamplingPeriod = 10
+
+    TimeWindowLength = 3
+    SamplingPeriod = 1
 
     SamplesPerBatch = TimeWindowLength/SamplingPeriod
 
     Windows = []
     PreviousFaceNum = 9999
     MaxFaces = 0
-    BatchConfused = BatchBored = BatchDistracted = BatchNotLooking = 0
+    BatchConfused = BatchBored = BatchDistracted = 0
 
-    def main(self):
-        counter = 0
-        for file in my_bucket.objects.all():
-            counter += 1
-
-            photo=file.key
-
-            response = client.detect_faces(Image={'S3Object':{'Bucket':bucket,'Name':photo}},Attributes=['ALL'])
-
-            NumFaces, ConfusedPeople, BoredPeople, DistractedPeople, PeopleNotLooking = AnalyzeFaces(response, PreviousFaceNum)
-
-            if (NumFaces > MaxFaces):
-                MaxFaces = NumFaces
-
-            BatchConfused += ConfusedPeople
-            BatchBored += BoredPeople
-            BatchDistracted += DistractedPeople
-            BatchNotLooking += PeopleNotLooking
-
-            if counter % SamplesPerBatch == 0:
-                Windows.append({'AvgConfused': float(BatchConfused)/SamplesPerBatch,
-                                'AvgBored': float(BatchBored)/SamplesPerBatch,
-                                'AvgDistracted': float(BatchDistracted)/SamplesPerBatch,
-                                'AvgNotLooking': float(BatchNotLooking)/SamplesPerBatch})
-                BatchConfused = BatchBored = BatchDistracted = BatchNotLooking = 0
+    def __init__(self):
+        pass
 
 
 
-    def AnalyzeFaces(response, PreviousFaceNum):
+
+
+
+    def AnalyzeFaces(self, response, PreviousFaceNum):
         '''
         Takes (response, PreviousFaceNum)
-        returns tuple containing (NumFaces, ConfusedPeople, BoredPeople, DistractedPeople, PeopleNotLooking)
+        returns tuple containing (NumFaces, ConfusedPeople, BoredPeople, DistractedPeople)
         '''
-        DISGUSTED = 0
-        HAPPY = 1
-        SURPRISED = 2
-        ANGRY = 3
-        CONFUSED = 4
-        CALM = 5
-        SAD = 6
 
-        for count, emotions in enumerate(faceDetail['Emotions']):
-            if emotions['Type'] == 'DISGUSTED':
-                DISGUSTED = count
-            elif emotions['Type'] == 'HAPPY':
-                HAPPY = count
-            elif emotions['Type'] == 'SURPRISED':
-                SURPRISED = count
-            elif emotions['Type'] == 'ANGRY':
-                ANGRY = count
-            elif emotions['Type'] == 'CONFUSED':
-                CONFUSED = count
-            elif emotions['Type'] == 'CALM':
-                CALM = count
-            elif emotions['Type'] == 'SAD':
-                SAD = count
+
 
         ConfusedPeople = 0
         BoredPeople = 0
         DistractedPeople = 0
-        PeopleNotLooking = 0
 
 
 
         for faceDetail in response['FaceDetails']:
-            if faceDetail['Emotions'][CONFUSED]['Confidence'] > 80:
-                ConfusedPeople += 1
-            if faceDetail['Emotions'][DISGUSTED]['Confidence'] > 80:
-                ConfusedPeople += 1
-            if ((faceDetail['MouthOpen']['Value'] == 'true' and faceDetail['Confidence'] > 80) or
-               (faceDetail['EyesOpen']['Value'] == 'false' and faceDetail['EyesOpen']['Confidence'] > 80)):
-                DistractedPeople += 1
+            for count, emotions in enumerate(faceDetail['Emotions']):
+                if emotions['Type'] == 'DISGUSTED':
+                    DISGUSTED = count
+                elif emotions['Type'] == 'HAPPY':
+                    HAPPY = count
+                elif emotions['Type'] == 'SURPRISED':
+                    SURPRISED = count
+                elif emotions['Type'] == 'ANGRY':
+                    ANGRY = count
+                elif emotions['Type'] == 'CONFUSED':
+                    CONFUSED = count
+                elif emotions['Type'] == 'CALM':
+                    CALM = count
+                elif emotions['Type'] == 'SAD':
+                    SAD = count
 
-            if ((faceDetail['Emotions'][CALM]['Confidence'] > 75) and
+
+
+            if (faceDetail['Emotions'][CONFUSED]['Confidence'] > 80) or  (faceDetail['Emotions'][DISGUSTED]['Confidence'] > 80):
+                ConfusedPeople += 1
+
+
+            if ( ((faceDetail['Emotions'][CALM]['Confidence'] > 75) and
                (faceDetail['Emotions'][HAPPY]['Confidence'] < 20) and
                (faceDetail['Emotions'][SURPRISED]['Confidence'] < 20) and
                (faceDetail['Emotions'][ANGRY]['Confidence'] < 20) and
                (faceDetail['Emotions'][CONFUSED]['Confidence'] < 20) and
                (faceDetail['Emotions'][SAD]['Confidence'] < 20) and
-               (faceDetail['Emotions'][DISGUSTED]['Confidence'] < 20)):
+               (faceDetail['Emotions'][DISGUSTED]['Confidence'] < 20)) or
+               (faceDetail['EyesOpen']['Value'] == 'false' and faceDetail['EyesOpen']['Confidence'] > 80) ):
                BoredPeople += 1
 
             if (len(response['FaceDetails']) < PreviousFaceNum):
                 if (PreviousFaceNum != 9999):
-                    PeopleNotLooking = PreviousFaceNum - len(response['FaceDetails'])
+                    DistractedPeople = PreviousFaceNum - len(response['FaceDetails'])
             PreviousFaceNum = len(response['FaceDetails'])
 
-            if (faceDetail['EyesOpen']['Value'] == 'false' and faceDetail['MouthOpen']['Confidence'] > 80):
-                PeopleNotLooking += 1
+            if ((faceDetail['MouthOpen']['Value'] == 'true' and faceDetail['Confidence'] > 80) or
+               (faceDetail['EyesOpen']['Value'] == 'false' and faceDetail['EyesOpen']['Confidence'] > 80) or
+               (abs(faceDetail['Pose']['Yaw']) > 60)):
+                DistractedPeople += 1
 
-        return (len(response['FaceDetails']), ConfusedPeople, BoredPeople, DistractedPeople, PeopleNotLooking)
+
+        return (len(response['FaceDetails']), ConfusedPeople, BoredPeople, DistractedPeople)
+
+    def main(self):
+        counter = 0
+        BatchConfused = BatchBored = BatchDistracted = 0
+
+
+        for file in self.my_bucket.objects.all():
+            counter += 1
+
+            photo=file.key
+
+            response = self.client.detect_faces(Image={'S3Object':{'Bucket':self.bucket,'Name':photo}},Attributes=['ALL'])
+
+            NumFaces, ConfusedPeople, BoredPeople, DistractedPeople = self.AnalyzeFaces(response, self.PreviousFaceNum)
+
+            if (NumFaces > self.MaxFaces):
+                self.MaxFaces = NumFaces
+
+            BatchConfused += ConfusedPeople
+            BatchBored += BoredPeople
+            BatchDistracted += DistractedPeople
+
+            if counter % self.SamplesPerBatch == 0:
+                self.Windows.append({'AvgConfused': float(BatchConfused)/self.SamplesPerBatch,
+                                'AvgBored': float(BatchBored)/self.SamplesPerBatch,
+                                'AvgDistracted': float(BatchDistracted)/self.SamplesPerBatch})
+                BatchConfused = BatchBored = BatchDistracted = 0
+        print(self.Windows)
