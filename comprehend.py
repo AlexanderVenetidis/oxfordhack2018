@@ -17,15 +17,56 @@ json_content = json.loads(file_content)
 comprehend = boto3.client(service_name='comprehend')
 
 
+n = 0
+text_each_minute = ""
+word = ""
+count = 1
+time = 0.0
+time_windows = []
+
+
+while n < len(json_content['results']['items']):
+    word = str(json_content['results']['items'][n]["alternatives"][0]["content"])
+    if str(json_content['results']['items'][n]["type"]) != "punctuation":
+        time = float(str(json_content['results']['items'][n]['end_time']))
+    if time/60 <= count:
+        if word == "." or word == ",":
+            text_each_minute = text_each_minute[:-1] + word + " "
+        else:
+            text_each_minute = text_each_minute + word + " "
+        n += 1
+    else:
+        if word == ".":
+            information = json.loads(json.dumps(comprehend.detect_sentiment(Text=text_each_minute, LanguageCode='en'), sort_keys=True, indent=4))
+            time_windows.append(information["SentimentScore"])
+            text_each_minute = ""
+            count += 1
+            n += 1
+        else:
+            while word != ".":
+                n += 1
+                word = str(json_content['results']['items'][n]["alternatives"][0]["content"])
+                if word == "." or word == ",":
+                    text_each_minute = text_each_minute[:-1] + word + " "
+                else:
+                    text_each_minute = text_each_minute + word + " "
+
+
+        information = json.loads(json.dumps(comprehend.detect_sentiment(Text=text_each_minute, LanguageCode='en'), sort_keys=True,
+                                 indent=4))
+        time_windows.append(information["SentimentScore"])
+        text_each_minute = ""
+        count += 1
+
+
+print('show sentiment')
+information = json.loads(json.dumps(comprehend.detect_sentiment(Text=text_each_minute, LanguageCode='en'), sort_keys=True, indent=4))
+time_windows.append(information["SentimentScore"])
+print(time_windows)
+print("show sentiment\n")
 
 
 
-text = str(json_content['results']['transcripts'][0]['transcript'])
 
-for piece in splitter(50, text):
-    print(piece)
-    print('Calling DetectDominantLanguage')
-    print(json.dumps(comprehend.detect_sentiment(Text=piece, LanguageCode='en'), sort_keys=True, indent=4))
-    print("End of DetectDominantLanguage\n")
 
 
