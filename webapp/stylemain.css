@@ -1,0 +1,49 @@
+#main_title {
+  color: white;
+  font-family: "Arial", serif;
+  font-weight: bold;
+  font-size: 350%;
+  text-align: center;
+
+background-color: rgba(30, 20, 150, 0.6);
+
+  margin: auto;
+  width: 800px;
+  padding: 20px 0;
+  border-radius: 50px;
+}
+
+button {
+  background-color: Transparent;
+    background-repeat:no-repeat;
+    border: none;
+    cursor:pointer;
+    overflow: hidden;
+    outline:none;
+}
+
+#button {
+  position: absolute;
+  left: 50px;
+  bottom: 50%;
+  width: 200px;
+
+}
+
+#thebutton {
+  color: white;
+}
+
+
+
+#thebuttontwo {
+  font-size: 25px;
+  margin-top: 5px;
+  color: white;
+  padding: 3px;
+  padding-top: 6px;
+  width: 160px;
+  background-color:  rgba(100, 50, 140, 0.9);
+  border-radius: 5px;
+
+}
