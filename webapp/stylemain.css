@@ -23,9 +23,9 @@ button {
 }
 
 #button {
-  position: absolute;
+  position: relative;
   left: 50px;
-  bottom: 50%;
+  top: 50px;
   width: 200px;
 
 }
@@ -45,5 +45,44 @@ button {
   width: 160px;
   background-color:  rgba(100, 50, 140, 0.9);
   border-radius: 5px;
+
+}
+
+#loader {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 60%;
+    width: 120px;
+    height: 120px;
+    animation: spin 1.5s linear infinite;
+    position: relative;
+    left: 44%;
+    top: 300px;
+    opacity: 0;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.table {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: 6px;
+  position: relative;
+}
+
+#vidtable {
+  opacity = 1;
+  margin-left: 20px;
+  float: right;
+
+}
+
+#speechtable {
+  opacity = 1;
+  margin-right: 20px:
+  float: left;
 
 }

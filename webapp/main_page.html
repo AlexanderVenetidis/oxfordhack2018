@@ -22,6 +22,38 @@ body {background-image: url("./img/lecture.jpg");
         <div id="results"></div>
     </div>
 
+    <div id="loader"></div>
+
+    <table class="table" id="vidtable">
+      <tr>
+        <th class="TableTitle">Time interval</th>
+        <th class="TableTitle">Avg people bored</th>
+        <th class="TableTitle">Avg people distracted</th>
+        <th class="TableTitle">Avg people confused</th>
+
+      </tr>
+      <tr w3-repeat="Items" >
+        <td class="TableContents">{{year}}</td>
+        <td class="TableContents">{{title}}</td>
+      </tr>
+    </table>
+
+    <table class="table" id="speechtable">
+      <tr>
+        <th class="TableTitle">Time interval</th>
+        <th class="TableTitle">Positivity (%)</th>
+        <th class="TableTitle">Negativity (%)</th>
+        <th class="TableTitle">Factuality (%)</th>
+
+      </tr>
+      <tr w3-repeat="Items" >
+        <td class="TableContents">{{year}}</td>
+        <td class="TableContents">{{title}}</td>
+      </tr>
+    </table>
+
+    <script src="https://www.w3schools.com/lib/w3.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
     <script src="data_processing.js"></script>
 
 
